@@ -10,7 +10,18 @@
       nixpkgs,
       ...
     }@inputs:
-    inputs.flake-utils.lib.eachDefaultSystem (
+    let
+      darwinSystem = [
+        "aarch64-darwin"
+      ];
+      linuxSystems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "riscv64-linux"
+      ];
+      supportedSystems = linuxSystems ++ darwinSystem;
+    in
+    inputs.flake-utils.lib.eachSystem supportedSystems (
       system:
       let
         pkgs = import nixpkgs { inherit system; };

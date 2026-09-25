@@ -47,6 +47,10 @@
                     find . -name "*.txt" -execdir sh -c '${pkgs.vice}/bin/petcat -text -w2 -o $1.prg -- $1' sh {} \;
                     runHook postBuild
                   '';
+                  installPhase = ''
+                    mkdir -p $out
+                    cp *.txt.prg $out
+                  '';
                 }
               );
             buildBinaryAsset =

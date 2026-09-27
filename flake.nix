@@ -69,8 +69,7 @@
                   '';
                 }
               );
-            buildD64 =
-              paths: name:
+            buildD64 = { name, paths, ... }:
               pkgs.stdenv.mkDerivation {
                 inherit name;
                 src = pkgs.symlinkJoin {

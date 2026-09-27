@@ -7,18 +7,21 @@
         lib = {
           mk = { pkgs }: {
             buildAcmePrg =
-              args@{ ... }:
+              args@{ ... }: let
+                acmeFlags = args.acmeFlags or [ ];
+                flagsString = pkgs.lib.concatStringsSep " " acmeFlags;
+              in
               pkgs.stdenv.mkDerivation (
                 args
                 // {
                   buildPhase = ''
                     runHook preBuild
-                    ${pkgs.acme}/bin/acme --cpu 6510 --format cbm -o ${args.name}.prg main.asm
+                    ${pkgs.acme}/bin/acme ${flagsString} main.asm
                     runHook postBuild
                   '';
                   installPhase = ''
                     mkdir -p $out
-                    cp ${args.name}.prg $out
+                    cp ${args.name}.* $out
                   '';
                 }
               );

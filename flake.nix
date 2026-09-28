@@ -1,10 +1,7 @@
 {
   description = "A collection of utility functions for packaging commodore business machines software software";
   outputs =
-    { ... }:
-    let
-    in
-    {
+    { ... }: {
       lib = {
         mk =
           { pkgs }:

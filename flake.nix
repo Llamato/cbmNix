@@ -7,7 +7,7 @@
         lib = {
           mk = { pkgs }: let 
             lib = pkgs.lib;
-            makeFlagsString = flags: pkgs.lib.concatStringsSep " " flags;
+            makeFlagsString = flags: lib.concatStringsSep " " flags;
           in {
             buildClangPrg = 
               args@{ ... }: 
@@ -94,8 +94,9 @@
                 buildPhase = ''
                   runHook preBuild
                   ${pkgs.vice}/bin/c1541 -format ${name},0 d64 ${name}.d64
-                  find . -name "*.prg" -a \! \( -name "*.bas.*" \) -execdir sh -c '${pkgs.vice}/bin/c1541 -attach "${name}.d64" -write "$1" "$(basename "$1" .prg)"' sh {} \;
+                  find . -name "${name}.prg" -a \! \( -name "*.bas.*" \) -execdir sh -c '${pkgs.vice}/bin/c1541 -attach "${name}.d64" -write "$1" "$(basename "$1" .prg)"' sh {} \;
                   find . -name "*.bas.prg" -execdir sh -c '${pkgs.vice}/bin/c1541 -attach "${name}.d64" -write "$1" "$(basename "$1" .bas.prg)"' sh {} \;
+                  find . -name "*.prg" -a \! -name "${name}.prg" -a \! -name "*.bas.prg" -execdir sh -c '${pkgs.vice}/bin/c1541 -attach "${name}.d64" -write "$1" "$(basename "$1" .prg)"' sh {} \;
                   find . -name "*.seq" -execdir sh -c '${pkgs.vice}/bin/c1541 -attach ${name}.d64 -write "$1" "$(basename "$1" .seq)"' sh {} \;
                   find . -name "*.bin" -execdir sh -c '${pkgs.vice}/bin/c1541 -attach ${name}.d64 -write "$1" "$(basename "$1" .bin)"' sh {} \;
                   runHook postBuild

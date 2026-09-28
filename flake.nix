@@ -55,7 +55,7 @@
                     find . -name "*.bas" -execdir sh -c '${pkgs.vice}/bin/petcat -w2 -o $1.prg -- $1' sh {} \;
                     runHook postBuild
                   '';
-                  installPhase = ''
+                  installPhase = lib.concatStringsSep "\n" ''
                     mkdir -p $out
                     cp *.bas.prg $out
                   '';

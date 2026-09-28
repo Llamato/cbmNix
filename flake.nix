@@ -103,7 +103,7 @@
                 '';
                 installPhase = ''
                   mkdir -p $out
-                  cp * $out
+                  cp *.prg $out
                 '';
               };
           };

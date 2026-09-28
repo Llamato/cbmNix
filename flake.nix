@@ -5,18 +5,33 @@
     in
       {
         lib = {
-          mk = { pkgs }: {
+          mk = { pkgs }: let 
+            lib = pkgs.lib;
+            makeFlagsString = flags: pkgs.lib.concatStringsSep " " flags;
+          in {
+            buildClangPrg = 
+              args@{ ... }: 
+              pkgs.stdenv.mkDerivation (
+                args // {
+                  buildPhase = ''
+                    runHook preBuild
+                    ${pkgs.llvm-mos-sdk}/bin/mos-${args.targetSystem}-clang ${makeFlagsString (args.clangFlags or [ ])}
+                    runHook postBuild
+                  '';
+                  installPhase = ''
+                    mkdir -p $out
+                    cp *.prg $out
+                  '';
+                }
+              );
             buildAcmePrg =
-              args@{ ... }: let
-                acmeFlags = args.acmeFlags or [ ];
-                flagsString = pkgs.lib.concatStringsSep " " acmeFlags;
-              in
+              args@{ ... }: 
               pkgs.stdenv.mkDerivation (
                 args
                 // {
                   buildPhase = ''
                     runHook preBuild
-                    ${pkgs.acme}/bin/acme ${flagsString} main.asm
+                    ${pkgs.acme}/bin/acme ${makeFlagsString (args.acmeFlags or [ ])}
                     runHook postBuild
                   '';
                   installPhase = ''
@@ -88,6 +103,7 @@
                 installPhase = ''
                   mkdir -p $out
                   cp ${name}.d64 $out
+                  cp ${name}.vicelabel
                 '';
               };
           };

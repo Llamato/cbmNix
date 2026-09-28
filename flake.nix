@@ -30,7 +30,7 @@
                 }
               );
             buildAcmePrg =
-              args@{ ... }:
+              args@{ debug ? false, ... }:
               pkgs.stdenv.mkDerivation (
                 args
                 // {
@@ -39,9 +39,12 @@
                     ${pkgs.acme}/bin/acme ${makeFlagsString (args.acmeFlags or [ ])}
                     runHook postBuild
                   '';
-                  installPhase = ''
+                  installPhase = if debug then ''
                     mkdir -p $out
                     cp * $out
+                  '' else ''
+                    mkdir -p $out
+                    cp *.prg $out
                   '';
                 }
               );

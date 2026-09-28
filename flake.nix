@@ -1,18 +1,23 @@
 {
   description = "A collection of utility functions for packaging commodore business machines software software";
-  outputs = {...}:
+  outputs =
+    { ... }:
     let
     in
-      {
-        lib = {
-          mk = { pkgs }: let 
+    {
+      lib = {
+        mk =
+          { pkgs }:
+          let
             lib = pkgs.lib;
             makeFlagsString = flags: lib.concatStringsSep " " flags;
-          in {
-            buildClangPrg = 
-              args@{ ... }: 
+          in
+          {
+            buildClangPrg =
+              args@{ ... }:
               pkgs.stdenv.mkDerivation (
-                args // {
+                args
+                // {
                   buildPhase = ''
                     runHook preBuild
                     ${pkgs.llvm-mos-sdk}/bin/mos-${args.targetSystem}-clang ${makeFlagsString (args.clangFlags or [ ])}
@@ -25,7 +30,7 @@
                 }
               );
             buildAcmePrg =
-              args@{ ... }: 
+              args@{ ... }:
               pkgs.stdenv.mkDerivation (
                 args
                 // {
@@ -36,7 +41,7 @@
                   '';
                   installPhase = ''
                     mkdir -p $out
-                    cp ${args.name}.* $out
+                    cp * $out
                   '';
                 }
               );
@@ -56,10 +61,11 @@
                   '';
                 }
               );
-            buildTextAsset = 
+            buildTextAsset =
               args@{ ... }:
               pkgs.stdenv.mkDerivation (
-                args // {
+                args
+                // {
                   buildPhase = ''
                     runHook preBuild
                     find . -name "*.txt" -execdir sh -c '${pkgs.vice}/bin/petcat -text -w2 -o $1.prg -- $1' sh {} \;
@@ -84,7 +90,13 @@
                   '';
                 }
               );
-            buildD64 = { name, paths, ... }:
+            buildD64 =
+              {
+                name,
+                paths,
+                debug ? false,
+                ...
+              }:
               pkgs.stdenv.mkDerivation {
                 inherit name;
                 src = pkgs.symlinkJoin {
@@ -101,12 +113,21 @@
                   find . -name "*.bin" -execdir sh -c '${pkgs.vice}/bin/c1541 -attach ${name}.d64 -write "$1" "$(basename "$1" .bin)"' sh {} \;
                   runHook postBuild
                 '';
-                installPhase = ''
-                  mkdir -p $out
-                  cp ${name}.d64 $out
-                '';
+                installPhase = lib.concatStringsSep "\n" [
+                  "mkdir -p $out"
+                  (
+                    if debug then
+                      ''
+                        cp * $out
+                      ''
+                    else
+                      ''
+                        cp ${name}.d64 $out
+                      ''
+                  )
+                ];
               };
           };
-        };
       };
+    };
 }

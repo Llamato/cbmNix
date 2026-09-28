@@ -103,7 +103,6 @@
                 installPhase = ''
                   mkdir -p $out
                   cp ${name}.d64 $out
-                  cp ${name}.vicelabel
                 '';
               };
           };

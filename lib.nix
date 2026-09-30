@@ -206,25 +206,15 @@ in
         inherit name;
         inherit paths;
       };
-      buildPhase =
-        lib.concatStringsSep "\n" [
-          "runHook preBuild"
-        ]
-        ++ [
-          "runHook postBuild"
-          "${pkgs.vice}/bin/c1541 -format ${name},0 d64 ${name}.d64"
-        ]
-        ++ lib.optional (builtins.hasAttr "starfile" args) [
-          ''find . -name ${args.starfile} -execdir sh -c '${pkgs.vice}/bin/c1541 -attach "${name}.d64" -write "$1" "${removeExtension (baseNameOf args.starfile)}"' sh {} \;''
-        ]
-        ++ [
-          ''find . -name "*.bas.prg" -execdir sh -c '${pkgs.vice}/bin/c1541 -attach "${name}.d64" -write "$1" "$(basename "$1" .bas.prg)"' sh {} \;''
-          ''find . -name "*.prg" \! -name "*.bas.prg" -execdir sh -c '${pkgs.vice}/bin/c1541 -attach "${name}.d64" -write "$1" "$(basename "$1" .prg)"' sh {} \;''
-          ''find . -name "*.seq" -execdir sh -c '${pkgs.vice}/bin/c1541 -attach ${name}.d64 -write "$1" "$(basename "$1" .seq)"' sh {} \;''
-        ]
-        ++ [
-          "runHook postBuild"
-        ];
+      buildPhase = ''
+        runHook preBuild
+        ${pkgs.vice}/bin/c1541 -format ${name},0 d64 ${name}.d64
+        ${lib.optionalString (builtins.hasAttr "starfile" args) '''find . -name ${args.starfile} -execdir sh -c '${pkgs.vice}/bin/c1541 -attach "${name}.d64" -write "$1" "${removeExtension (baseNameOf args.starfile)}"' sh {} \;''}
+        find . -name "*.bas.prg" -execdir sh -c '${pkgs.vice}/bin/c1541 -attach "${name}.d64" -write "$1" "$(basename "$1" .bas.prg)"' sh {} \;
+        find . -name "*.prg" \! -name "*.bas.prg" -execdir sh -c '${pkgs.vice}/bin/c1541 -attach "${name}.d64" -write "$1" "$(basename "$1" .prg)"' sh {} \;
+        find . -name "*.seq" -execdir sh -c '${pkgs.vice}/bin/c1541 -attach ${name}.d64 -write "$1" "$(basename "$1" .seq)"' sh {} \;
+        runHook postBuild
+      '';
 
       installPhase =
         if debug then

@@ -8,7 +8,6 @@ let
   removeExtension = filename: builtins.match "(.+)\\.[^.]+" filename;
 in
 {
-
   /**
     Build a c program for 6500 series of processors using llvm-mos
 
@@ -128,7 +127,7 @@ in
       };
     ```
   */
-  buildBasicPrg =
+  buildBasicPrgs =
     {
       name,
       src,
@@ -148,7 +147,7 @@ in
         cp * $out
       '' else ''
         mkdir -p $out
-        cp ${name}.bas.prg $out
+        cp *.bas.prg $out
       '';
     }
     // removeAttrs args [ "targetSystem" ];
@@ -175,7 +174,7 @@ in
       }
      ```
   */
-  buildPetsciiTextFile =
+  buildPetsciiTextFiles =
     {
       name,
       src,
@@ -197,7 +196,7 @@ in
         cp * $out
       '' else ''
         mkdir -p $out
-        cp ${name}.txt.prg $out
+        cp *.txt.prg $out
       '';
     }
     // removeAttrs args [

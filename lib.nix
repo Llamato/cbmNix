@@ -1,10 +1,9 @@
-{ pkgs }:
+{ pkgs, lib }:
 let
   petcatSupportedCbmFileTypes = [
     "prg"
     "seq"
   ];
-  lib = pkgs.lib;
   makeFlagsString = flags: lib.concatStringsSep " " flags;
   removeExtension = filename: builtins.match "(.+)\\.[^.]+" filename;
 in

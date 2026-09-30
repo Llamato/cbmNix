@@ -248,7 +248,7 @@ in
         else
           ''
             mkdir -p $out
-            cp *.prg $out
+            cp ${name}.d64 $out
           '';
     }
     // removeAttrs args [

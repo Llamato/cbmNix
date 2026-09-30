@@ -99,7 +99,7 @@ in
         else
           ''
             mkdir -p $out
-            cp *.prg $out
+            cp ${name}.prg $out
           '';
     }
     // removeAttrs args [

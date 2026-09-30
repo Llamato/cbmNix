@@ -32,11 +32,14 @@ in
   */
   buildClangPrg =
     {
+      name,
+      src,
       targetSystem,
       clangFlags ? [ ],
       ...
     }@args:
     pkgs.stdenv.mkDerivation {
+      inherit name src;
       buildPhase = ''
         runHook preBuild
         ${pkgs.llvm-mos-sdk}/bin/mos-${targetSystem}-clang ${makeFlagsString clangFlags}
@@ -75,11 +78,14 @@ in
   */
   buildAcmePrg =
     {
+      name,
+      src,
       debug ? false,
       acmeFlags ? [ ],
       ...
     }@args:
     pkgs.stdenv.mkDerivation {
+      inherit name src;
       buildPhase = ''
         runHook preBuild
         ${pkgs.acme}/bin/acme ${makeFlagsString acmeFlags}
@@ -123,8 +129,14 @@ in
     ```
   */
   buildBasicPrg =
-    { targetSystem, ... }@args:
+    {
+      name,
+      src,
+      targetSystem,
+      ...
+    }@args:
     pkgs.stdenv.mkDerivation {
+      inherit name src;
       buildPhase = ''
         runHook preBuild
         find . -name "*.bas" -execdir sh -c '${pkgs.vice}/bin/petcat -w2 -o $1.prg -- $1' sh {} \;
@@ -143,6 +155,12 @@ in
     # Type:
       `buildPetsciiAsset = { ... } @ args: Derivation`
 
+    # Args:
+    - name (String): The name of the resulting derivation.
+    - src (Path): The path to the source files for the derivation.
+    - cbmFileType (String): The cbm file type for the output text.
+    - petcatFlags (List of String): A list of flags passed directly to petcat.
+
     # Example:
      ```nix
       packages.default = buildPetsciiTextFile {
@@ -154,12 +172,15 @@ in
   */
   buildPetsciiTextFile =
     {
+      name,
+      src,
       cbmFileType ? "prg",
       petcatFlags,
       ...
     }@args:
     assert (lib.assertOneOf "cbmFileType" cbmFileType petcatSupportedCbmFileTypes);
     pkgs.stdenv.mkDerivation {
+      inherit name src;
       buildPhase = ''
         runHook preBuild
         find . -name "*.txt" -execdir sh -c '${pkgs.vice}/bin/petcat ${makeFlagsString petcatFlags} -text -w2 -o $1.${cbmFileType} -- $1' sh {} \;
@@ -184,6 +205,8 @@ in
     # Args:
     - name (String): The name of the resulting derivation.
     - paths (List of path): Paths of files to be included in the derivation
+    - debug (Bool): Should debug label output files be included in the derivation
+    
     # Example:
      ```nix
      packages.default = buildD64 {

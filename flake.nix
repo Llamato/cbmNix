@@ -12,6 +12,18 @@
     { nixpkgs, ... }:
     let
       libfile = ./lib.nix;
+      darwinSystem = [
+        "aarch64-darwin"
+      ];
+      linuxSystems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "riscv64-linux"
+      ];
+      allSystems = linuxSystems ++ darwinSystem;
+      lib = nixpkgs.lib;
+      forAllSystems = lib.genAttrs allSystems;
+      pkgsFor = system: import nixpkgs { inherit system; };
     in
     {
       lib = {
@@ -22,44 +34,45 @@
             lib = pkgs.lib;
           };
       };
-      packages =
+      packages = forAllSystems (
+        system:
         let
-          darwinSystem = [
-            "aarch64-darwin"
-          ];
-          linuxSystems = [
-            "x86_64-linux"
-            "aarch64-linux"
-            "riscv64-linux"
-          ];
-          allSystems = linuxSystems ++ darwinSystem;
-          lib = nixpkgs.lib;
-          forAllSystems = lib.genAttrs allSystems;
+          pkgs = pkgsFor system;
+          docs =
+            pkgs.runCommand "cbmNix-docs"
+              {
+                buildInputs = with pkgs; [
+                  nixdoc
+                ];
+              }
+              ''
+                mkdir -p $out
+                nixdoc --file ${libfile} \
+                --category cbm \
+                --description "A collection of utility functions for packaging commodore business machines software software" \
+                --prefix cbmNix \
+                > $out/index.md
+              '';
         in
-        forAllSystems (
-          system:
-          let
-            pkgs = import nixpkgs { inherit system; };
-            docs =
-              pkgs.runCommand "cbmNix-docs"
-                {
-                  buildInputs = with pkgs; [ 
-                    nixdoc 
-                  ];
-                }
-                ''
-                  mkdir -p $out
-                  nixdoc --file ${libfile} \
-                  --category cbm \
-                  --description "A collection of utility functions for packaging commodore business machines software software" \
-                  --prefix cbmNix \
-                  > $out/index.md
-                '';
-          in
-          {
-            inherit docs;
-            default = docs;
-          }
-        );
+        {
+          inherit docs;
+          default = docs;
+        }
+      );
+      devShells = forAllSystems (
+        system:
+        let
+          pkgs = pkgsFor system;
+        in
+        {
+          default = {
+            packages = with pkgs; [
+              nixfmt
+              nixd
+              nixdoc
+            ];
+          };
+        }
+      );
     };
 }

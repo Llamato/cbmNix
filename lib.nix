@@ -175,6 +175,7 @@ in
       name,
       src,
       cbmFileType ? "prg",
+      petcatFlags ? [],
       ...
     }@args:
     assert (lib.assertOneOf "cbmFileType" cbmFileType petcatSupportedCbmFileTypes);
@@ -182,7 +183,7 @@ in
       inherit name src;
       buildPhase = ''
         runHook preBuild
-        find . -name "*.txt" -execdir sh -c '${pkgs.vice}/bin/petcat ${makeFlagsString (args.petcatFlags or "")} -text -w2 -o $1.${cbmFileType} -- $1' sh {} \;
+        find . -name "*.txt" -execdir sh -c '${pkgs.vice}/bin/petcat ${makeFlagsString petcatFlags} -text -w2 -o $1.${cbmFileType} -- $1' sh {} \;
         runHook postBuild
       '';
       installPhase = ''

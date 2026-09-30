@@ -64,8 +64,8 @@ in
     # Args:
     - name (String): The name of the resulting derivation.
     - src (Path): The path to the source files for the derivation.
-    - debug (Bool): Should the derivation include debugging artifacts like labels?
     - acmeFlags (List of String): additional compiler flags.
+    - debug (Bool): Should the derivation include debugging artifacts like labels?
 
     # Example:
      ```nix
@@ -80,8 +80,8 @@ in
     {
       name,
       src,
-      debug ? false,
       acmeFlags ? [ ],
+      debug ? false,
       ...
     }@args:
     pkgs.stdenv.mkDerivation {
@@ -118,7 +118,7 @@ in
     - name (String): The name of the resulting derivation.
     - src (Path): The path to the source files for the derivation.
     - targetSystem (String): The shorthand name for the the computer model the program shall run on.
-
+    - debug (Bool): Should the output derivation include build and debugging artifacts?
     # Example:
     ```nix
       packages.default = buildBasicPrg {
@@ -133,6 +133,7 @@ in
       name,
       src,
       targetSystem,
+      debug ? false,
       ...
     }@args:
     pkgs.stdenv.mkDerivation {
@@ -142,9 +143,12 @@ in
         find . -name "*.bas" -execdir sh -c '${pkgs.vice}/bin/petcat -w2 -o $1.prg -- $1' sh {} \;
         runHook postBuild
       '';
-      installPhase = ''
+      installPhase = if debug then ''
         mkdir -p $out
-        cp *.bas.prg $out
+        cp * $out
+      '' else ''
+        mkdir -p $out
+        cp ${name}.bas.prg $out
       '';
     }
     // removeAttrs args [ "targetSystem" ];
@@ -160,6 +164,7 @@ in
     - src (Path): The path to the source files for the derivation.
     - cbmFileType (String): The cbm file type for the output text.
     - petcatFlags (List of String): A list of flags passed directly to petcat.
+    - debug (Bool): Should the output derivation include build and debugging artifacts?
 
     # Example:
      ```nix
@@ -176,6 +181,7 @@ in
       src,
       cbmFileType ? "prg",
       petcatFlags ? [],
+      debug ? false,
       ...
     }@args:
     assert (lib.assertOneOf "cbmFileType" cbmFileType petcatSupportedCbmFileTypes);
@@ -186,9 +192,12 @@ in
         find . -name "*.txt" -execdir sh -c '${pkgs.vice}/bin/petcat ${makeFlagsString petcatFlags} -text -w2 -o $1.${cbmFileType} -- $1' sh {} \;
         runHook postBuild
       '';
-      installPhase = ''
+      installPhase = if debug then ''
         mkdir -p $out
-        cp *.txt.prg $out
+        cp * $out
+      '' else ''
+        mkdir -p $out
+        cp ${name}.txt.prg $out
       '';
     }
     // removeAttrs args [

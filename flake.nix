@@ -59,13 +59,31 @@
           default = docs;
         }
       );
+      
+      checks = forAllSystems (system:
+        let
+          pkgs = pkgsFor system;
+          formatter = pkgs.runCommand "formatter" {
+            src = ./.; #Not being fetched
+          } ''
+            find . -name '*.nix' -exec ${pkgs.nixfmt}/bin/nixfmt --check {} +
+            mkdir -p $out
+            touch $out/pass
+          '';
+          in
+          {
+            inherit formatter;
+            default = formatter;
+          }
+      );
+
       devShells = forAllSystems (
         system:
         let
           pkgs = pkgsFor system;
         in
         {
-          default = {
+          default = pkgs.mkShellNoCC {
             packages = with pkgs; [
               nixfmt
               nixd

@@ -6,6 +6,7 @@ let
   ];
   makeFlagsString = flags: lib.concatStringsSep " " flags;
   removeExtension = filename: builtins.match "(.+)\\.[^.]+" filename;
+  decToHex = dec: hex: if dec == 0 then hex else decToHex (dec / 16) (hex + builtins.elemAt (lib.stringToCharacters "0123456789ABCDEF") (lib.mod dec 16));
 in
 {
   /**
@@ -118,6 +119,7 @@ in
     - src (Path): The path to the source files for the derivation.
     - targetSystem (String): The shorthand name for the the computer model the program shall run on.
     - debug (Bool): Should the output derivation include build and debugging artifacts?
+    
     # Example:
     ```nix
       packages.default = buildBasicPrg {
@@ -150,7 +152,45 @@ in
         cp *.bas.prg $out
       '';
     }
-    // removeAttrs args [ "targetSystem" ];
+    // removeAttrs args [ "targetSystem" "debug" ];
+
+
+  /**
+    Build a cbm compatible prg files from a modern binary files
+
+    # Type:
+    `buildBinaryPrgs = { targetSystem, ... } @ args: Derivation`
+
+    # Args:
+    - name (String): The name of the derivation.
+    - src (Path): The path to the source files for the derivation. 
+    - includedFiles (List of String): The file extensions to include.
+    - debug (Bool): Should the output derivation include build and debugging artifacts?
+   */
+  buildBinaryPrgs = {
+    name,
+    src,
+    includedFiles ? [ "*.prg" ],
+    debug ? false,
+    ...
+  }@args: let
+    loadAddressHex = if builtins.isString args.loadAddress then args.loadAddress else decToHex args.loadAddress;
+   in pkgs.stdenv.mkDerivation {
+    inherit name src; 
+    buildPhase = ''
+      runHook preBuild
+      ${lib.optionalString (builtins.hasAttr "loadAddress") (builtins.concatStringsSep "\n" (map (fileType: ''find -name ${fileType} --execdir sh -c 'echo "${loadAddressHex}" | xxd -r -p | cat - $1 > $1' sh {}'') includedFiles))}
+      runHook postBuild
+    '';
+
+    installPhase = if debug then ''
+      mkdir -p $out
+      cp * $out
+    '' else ''
+      mkdir -p $out
+      cp *.prg $out
+    '';
+  };
 
   /**
     Build a PETSCII text file asset using petcats

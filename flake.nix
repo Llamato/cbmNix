@@ -59,22 +59,26 @@
           default = docs;
         }
       );
-      
-      checks = forAllSystems (system:
+
+      checks = forAllSystems (
+        system:
         let
           pkgs = pkgsFor system;
-          formatter = pkgs.runCommand "formatter" {
-            src = ./.; #Not being fetched
-          } ''
-            find . -name '*.nix' -exec ${pkgs.nixfmt}/bin/nixfmt --check {} +
-            mkdir -p $out
-            touch $out/pass
-          '';
-          in
-          {
-            inherit formatter;
-            default = formatter;
-          }
+          formatter =
+            pkgs.runCommand "formatter"
+              {
+                src = ./.;
+              }
+              ''
+                find $src -name '*.nix' -exec ${pkgs.nixfmt}/bin/nixfmt --check {} +
+                mkdir -p $out
+                touch $out/pass
+              '';
+        in
+        {
+          inherit formatter;
+          default = formatter;
+        }
       );
 
       devShells = forAllSystems (

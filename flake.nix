@@ -66,9 +66,15 @@
         {
           inherit docs;
           default = docs;
+          vice-headless = pkgs.vice.overrideAttrs (old: {
+            configureFlags = [
+              "--enable-headlessui"
+              "--disable-pdf-docs"
+              "--with-gif"
+            ];
+          });
         }
       );
-
       checks = forAllSystems (
         system:
         let
@@ -89,7 +95,6 @@
           default = formatter;
         }
       );
-
       devShells = forAllSystems (
         system:
         let

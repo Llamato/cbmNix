@@ -1,4 +1,9 @@
-{ pkgs, lib, testPkgs, ... }:
+{
+  self,
+  pkgs,
+  lib,
+  ...
+}:
 let
   petcatSupportedCbmFileTypes = [
     "prg"
@@ -368,6 +373,7 @@ in
     {
       name,
       emulator ? "x64sc" configFile,
+      configFile,
       monitorCommandsFile,
       keystrokesFile,
       fileUnderTest,
@@ -392,7 +398,7 @@ in
     in
     pkgs.runCommand name { } ''
       export HOME=$(mktemp -d)
-      timeout ${failAfter} ${testPkgs.vice-headless}/bin/${emulator} ${lib.concatStringsSep " " viceFlags}
+      timeout ${failAfter} ${self.packages.vice-headless}/bin/${emulator} ${lib.concatStringsSep " " viceFlags}
       if [[ $ == 124 || $ == 125 || $ == 126 || $ == 127 || $ == 137 ]]; then
         echo "failAfter timeout time of $failAfter seconds has been exceeded. $name failed.
         exit $

@@ -337,63 +337,68 @@ in
     ];
 
   /**
-    Test a cbm program using the vice Emulator
+      Test a cbm program using the vice Emulator
 
-    # Type:
-    checkWithVice = { name, emulator, configFile, monitorCommandsFile, keystrokesFile, diskFile, exitOn, exitAfter, warp, extraViceFlags, nativeCheckPhase, ...}@args : Derivation
-   
-   Args:
-   - name (String): The name of the test being run.
-   - emulator (String): The basename of the emulator executable to use.
-   - configFile (Path): A path to the vice config to be used for the test.
-   - monitorCommandsFile (Path): A path to a monitor commands script to be used for the test.
-   - keystrokesFile (Path): A path to a text file containing a series of keystrokes to be loaded into the keybord input buffer upon program load.
-   - fileUnderTest (Path): A path to the program file or disk image containing the programm file under test.
-   - failAfter (Int): A timelimit in seconds of realtime.
-   - warp (Bool): Use vice warp mode to speed up test?
-   - extraViceFlags (List of String): Extra flags to be passed to the emulator execuatable.
-   - nativeCheckPhase (String): A script containing shell comands to be run on the emulator host system after the emulator run succeeds.
-  
-  Example:
-    checks.default = checkWithVice {
-      name = "myViceTest";
-      emulator = "x128";
-      configFile = ./myViceTestConfig.ini;
-      monitorCommandsFile = ./myViceTestMonitorCommands.ini;
-      keystrokesFile = ./myViceTestKeystrokes.txt;
-      fileUnderTest = ./prgdisk.d64;
-    }
-   */
-  checkWithVice = {
-    name,
-    emulator ? "x64sc"
-    configFile,
-    monitorCommandsFile,
-    keystrokesFile,
-    fileUnderTest,
-    failAfter ? 300,
-    warp ? true,
-    extraViceFlags ? [],
-    nativeCheckPhase ? ""
-    ...
-  }@args: let
-    viceFlags = [
-      "-initbreak ready"
-    ] ++ lib.optional warp [
-      "-warp"
-    ] ++ [
-      "-moncommands ${monitorCommandsFile}"
-      "-autostart ${diskFile}"
-    ] ++ extraViceFlags;
-  in pkgs.runCommand name {} ''
-    export HOME=$(mktemp -d)
-    timeout ${failAfter} ${testPkgs.vice-headless}/bin/${emulator} ${lib.concatStringsSep " " viceFlags}
-    if [[ $ == 124 || $ == 125 || $ == 126 || $ == 127 || $ == 137 ]]; then
-      echo "failAfter timeout time of $failAfter seconds has been exceeded. $name failed.
-      exit $
-    fi
-    ${nativeCheckPhase}
-    mkdir -p $out
-    touch $out/passed
-  '';
+      # Type:
+      checkWithVice = { name, emulator, configFile, monitorCommandsFile, keystrokesFile, diskFile, exitOn, exitAfter, warp, extraViceFlags, nativeCheckPhase, ...}@args : Derivation
+
+     Args:
+     - name (String): The name of the test being run.
+     - emulator (String): The basename of the emulator executable to use.
+     - configFile (Path): A path to the vice config to be used for the test.
+     - monitorCommandsFile (Path): A path to a monitor commands script to be used for the test.
+     - keystrokesFile (Path): A path to a text file containing a series of keystrokes to be loaded into the keybord input buffer upon program load.
+     - fileUnderTest (Path): A path to the program file or disk image containing the programm file under test.
+     - failAfter (Int): A timelimit in seconds of realtime.
+     - warp (Bool): Use vice warp mode to speed up test?
+     - extraViceFlags (List of String): Extra flags to be passed to the emulator execuatable.
+     - nativeCheckPhase (String): A script containing shell comands to be run on the emulator host system after the emulator run succeeds.
+
+    Example:
+      checks.default = checkWithVice {
+        name = "myViceTest";
+        emulator = "x128";
+        configFile = ./myViceTestConfig.ini;
+        monitorCommandsFile = ./myViceTestMonitorCommands.ini;
+        keystrokesFile = ./myViceTestKeystrokes.txt;
+        fileUnderTest = ./prgdisk.d64;
+      }
+  */
+  checkWithVice =
+    {
+      name,
+      emulator ? "x64sc" configFile,
+      monitorCommandsFile,
+      keystrokesFile,
+      fileUnderTest,
+      failAfter ? 300,
+      warp ? true,
+      extraViceFlags ? [ ],
+      nativeCheckPhase ? "",
+      ...
+    }@args:
+    let
+      viceFlags = [
+        "-initbreak ready"
+      ]
+      ++ lib.optional warp [
+        "-warp"
+      ]
+      ++ [
+        "-moncommands ${monitorCommandsFile}"
+        "-autostart ${diskFile}"
+      ]
+      ++ extraViceFlags;
+    in
+    pkgs.runCommand name { } ''
+      export HOME=$(mktemp -d)
+      timeout ${failAfter} ${testPkgs.vice-headless}/bin/${emulator} ${lib.concatStringsSep " " viceFlags}
+      if [[ $ == 124 || $ == 125 || $ == 126 || $ == 127 || $ == 137 ]]; then
+        echo "failAfter timeout time of $failAfter seconds has been exceeded. $name failed.
+        exit $
+      fi
+      ${nativeCheckPhase}
+      mkdir -p $out
+      touch $out/passed
+    '';
 }

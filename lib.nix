@@ -1,4 +1,4 @@
-{ pkgs, lib }:
+{ pkgs, lib, testPkgs, ... }:
 let
   petcatSupportedCbmFileTypes = [
     "prg"

@@ -32,6 +32,15 @@
           import libfile {
             inherit pkgs;
             lib = pkgs.lib;
+            testPkgs = {
+              vice-headless = pkgs.vice.overrideAttrs (old: {
+                configureFlags = [
+                  "--enable-headlessui"
+                  "--disable-pdf-docs"
+                  "--with-gif"
+                ];
+              });
+            };
           };
       };
       packages = forAllSystems (

@@ -387,7 +387,7 @@ in
       failAfter = toString failAfterSeconds;
       viceFlags = [
         ''-initbreak ready''
-        ''-keybuf ${lib.escapeShellArg (builtins.readFile keystrokesFile)}''
+        ''-keybuf "${lib.escapeShellArg (builtins.readFile keystrokesFile)}"''
       ]
       ++ lib.optional (builtins.hasAttr "configFile" args) ''-config ${args.configFile}''
       ++ lib.optional warp ''-warp''
@@ -399,7 +399,6 @@ in
     in
     pkgs.runCommand name { } ''
       export HOME=$(mktemp -d)
-      cd $HOME
       ${preCheckPhase}
       timeout ${failAfter} ${testPkgs.vice-headless}/bin/${emulator} ${lib.concatStringsSep " " viceFlags}
       ${postCheckPhase}

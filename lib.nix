@@ -374,22 +374,22 @@ in
       name,
       emulator ? "x64sc",
       fileUnderTest,
-      configFile,
       monitorCommandsFile,
       keystrokesFile,
       failAfterSeconds ? 300,
       warp ? true,
       extraViceFlags ? [ ],
-      nativeCheckPhase ? "",
+      preCheckPhase ? '''',
+      postCheckPhase ? '''',
       ...
-    }:
+    }@args:
     let
       failAfter = toString failAfterSeconds;
       viceFlags = [
         ''-initbreak ready''
-        ''-config ${configFile}''
-        ''-keybuf "${builtins.readFile keystrokesFile}"''
+        ''-keybuf ${lib.escapeShellArg (builtins.readFile keystrokesFile)}''
       ]
+      ++ lib.optional (builtins.hasAttr "configFile" args) ''-config ${args.configFile}''
       ++ lib.optional warp ''-warp''
       ++ [
         ''-moncommands ${monitorCommandsFile}''
@@ -399,12 +399,10 @@ in
     in
     pkgs.runCommand name { } ''
       export HOME=$(mktemp -d)
+      ${preCheckPhase}
       timeout ${failAfter} ${testPkgs.vice-headless}/bin/${emulator} ${lib.concatStringsSep " " viceFlags}
-      if [[ $ == 124 || $ == 125 || $ == 126 || $ == 127 || $ == 137 ]]; then
-        echo "failAfter timeout time of $failAfter seconds has been exceeded. $name failed.
-        exit $
-      fi
-      ${nativeCheckPhase}
+      echo timeout ${failAfter} ${testPkgs.vice-headless}/bin/${emulator} ${lib.concatStringsSep " " viceFlags}
+      ${postCheckPhase}
       mkdir -p $out
       touch $out/passed
     '';

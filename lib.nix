@@ -1,6 +1,6 @@
 {
-  self,
   pkgs,
+  testPkgs,
   lib,
   ...
 }:
@@ -377,21 +377,20 @@ in
       configFile,
       monitorCommandsFile,
       keystrokesFile,
-      failAfter ? 300,
+      failAfterSeconds ? 300,
       warp ? true,
       extraViceFlags ? [ ],
       nativeCheckPhase ? "",
       ...
     }:
     let
+      failAfter = toString failAfterSeconds;
       viceFlags = [
         ''-initbreak ready''
         ''-config ${configFile}''
         ''-keybuf "${builtins.readFile keystrokesFile}"''
       ]
-      ++ lib.optional warp [
-        ''-warp''
-      ]
+      ++ lib.optional warp ''-warp''
       ++ [
         ''-moncommands ${monitorCommandsFile}''
         ''-autostart ${fileUnderTest}''
@@ -400,7 +399,7 @@ in
     in
     pkgs.runCommand name { } ''
       export HOME=$(mktemp -d)
-      timeout ${failAfter} ${self.packages.vice-headless}/bin/${emulator} ${lib.concatStringsSep " " viceFlags}
+      timeout ${failAfter} ${testPkgs.vice-headless}/bin/${emulator} ${lib.concatStringsSep " " viceFlags}
       if [[ $ == 124 || $ == 125 || $ == 126 || $ == 127 || $ == 137 ]]; then
         echo "failAfter timeout time of $failAfter seconds has been exceeded. $name failed.
         exit $

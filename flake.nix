@@ -32,7 +32,6 @@
           import libfile {
             inherit pkgs;
             lib = pkgs.lib;
-            self = self;
             testPkgs = {
               vice-headless = pkgs.vice.overrideAttrs (old: {
                 configureFlags = [

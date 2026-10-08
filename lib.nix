@@ -352,7 +352,6 @@ in
      - emulator (String): The basename of the emulator executable to use.
      - configFile (Path): A path to the vice config to be used for the test.
      - monitorCommandsFile (Path): A path to a monitor commands script to be used for the test.
-     - keystrokesFile (Path): A path to a text file containing a series of keystrokes to be loaded into the keyboard input buffer upon program load.
      - fileUnderTest (Path): A path to the program file or disk image containing the program file under test.
      - failAfter (Int): A timelimit in seconds of realtime.
      - warp (Bool): Use vice warp mode to speed up test?
@@ -387,7 +386,6 @@ in
       viceFlags = [
         ''-initbreak ready''
       ] 
-      ++ lib.optional (builtins.hasAttr "keystrokes" args) ''-keybuf \"${args.keystrokes}\"''
       ++ lib.optional (builtins.hasAttr "configFile" args) ''-config ${args.configFile}''
       ++ lib.optional warp ''-warp''
       ++ [

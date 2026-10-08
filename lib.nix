@@ -387,7 +387,7 @@ in
       viceFlags = [
         ''-initbreak ready''
       ] 
-      ++ lib.optional (builtins.hasAttr "keystrokesFile" args) ''-keybuf \"${builtins.readFile args.keystrokesFile}\"''
+      ++ lib.optional (builtins.hasAttr "keystrokes" args) ''-keybuf \"${args.keystrokes}\"''
       ++ lib.optional (builtins.hasAttr "configFile" args) ''-config ${args.configFile}''
       ++ lib.optional warp ''-warp''
       ++ [

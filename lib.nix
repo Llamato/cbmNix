@@ -200,7 +200,7 @@ in
       inherit name src;
       buildPhase = ''
         runHook preBuild
-        ${lib.optionalString (builtins.hasAttr "loadAddress") (
+        ${lib.optionalString (builtins.hasAttr "loadAddress" args) (
           builtins.concatStringsSep "\n" (
             map (
               fileType:

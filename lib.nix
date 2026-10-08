@@ -399,9 +399,9 @@ in
     in
     pkgs.runCommand name { } ''
       export HOME=$(mktemp -d)
+      cd $HOME
       ${preCheckPhase}
       timeout ${failAfter} ${testPkgs.vice-headless}/bin/${emulator} ${lib.concatStringsSep " " viceFlags}
-      echo timeout ${failAfter} ${testPkgs.vice-headless}/bin/${emulator} ${lib.concatStringsSep " " viceFlags}
       ${postCheckPhase}
       mkdir -p $out
       touch $out/passed

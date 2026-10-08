@@ -352,47 +352,49 @@ in
      - emulator (String): The basename of the emulator executable to use.
      - configFile (Path): A path to the vice config to be used for the test.
      - monitorCommandsFile (Path): A path to a monitor commands script to be used for the test.
-     - keystrokesFile (Path): A path to a text file containing a series of keystrokes to be loaded into the keybord input buffer upon program load.
-     - fileUnderTest (Path): A path to the program file or disk image containing the programm file under test.
+     - keystrokesFile (Path): A path to a text file containing a series of keystrokes to be loaded into the keyboard input buffer upon program load.
+     - fileUnderTest (Path): A path to the program file or disk image containing the program file under test.
      - failAfter (Int): A timelimit in seconds of realtime.
      - warp (Bool): Use vice warp mode to speed up test?
-     - extraViceFlags (List of String): Extra flags to be passed to the emulator execuatable.
-     - nativeCheckPhase (String): A script containing shell comands to be run on the emulator host system after the emulator run succeeds.
+     - extraViceFlags (List of String): Extra flags to be passed to the emulator executable.
+     - nativeCheckPhase (String): A script containing shell commands to be run on the emulator host system after the emulator run succeeds.
 
     Example:
       checks.default = checkWithVice {
         name = "myViceTest";
         emulator = "x128";
+        fileUnderTest = ./prgdisk.d64;
         configFile = ./myViceTestConfig.ini;
         monitorCommandsFile = ./myViceTestMonitorCommands.ini;
         keystrokesFile = ./myViceTestKeystrokes.txt;
-        fileUnderTest = ./prgdisk.d64;
       }
   */
   checkWithVice =
     {
       name,
-      emulator ? "x64sc" configFile,
+      emulator ? "x64sc",
+      fileUnderTest,
       configFile,
       monitorCommandsFile,
       keystrokesFile,
-      fileUnderTest,
       failAfter ? 300,
       warp ? true,
       extraViceFlags ? [ ],
       nativeCheckPhase ? "",
       ...
-    }@args:
+    }:
     let
       viceFlags = [
-        "-initbreak ready"
+        ''-initbreak ready''
+        ''-config ${configFile}''
+        ''-keybuf "${builtins.readFile keystrokesFile}"''
       ]
       ++ lib.optional warp [
-        "-warp"
+        ''-warp''
       ]
       ++ [
-        "-moncommands ${monitorCommandsFile}"
-        "-autostart ${diskFile}"
+        ''-moncommands ${monitorCommandsFile}''
+        ''-autostart ${fileUnderTest}''
       ]
       ++ extraViceFlags;
     in

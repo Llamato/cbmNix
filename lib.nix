@@ -375,7 +375,6 @@ in
       emulator ? "x64sc",
       fileUnderTest,
       monitorCommandsFile,
-      keystrokesFile,
       failAfterSeconds ? 300,
       warp ? true,
       extraViceFlags ? [ ],
@@ -387,8 +386,8 @@ in
       failAfter = toString failAfterSeconds;
       viceFlags = [
         ''-initbreak ready''
-        ''-keybuf "${lib.escapeShellArg (builtins.readFile keystrokesFile)}"''
-      ]
+      ] 
+      ++ lib.optional (builtins.hasAttr "keystrokesFile" args) ''-keybuf "${lib.escapeShellArg (builtins.readFile args.keystrokesFile)}"''
       ++ lib.optional (builtins.hasAttr "configFile" args) ''-config ${args.configFile}''
       ++ lib.optional warp ''-warp''
       ++ [

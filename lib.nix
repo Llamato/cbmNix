@@ -401,7 +401,10 @@ in
       export HOME=$(mktemp -d)
       ${preCheckPhase}
       timeout ${failAfter} ${testPkgs.vice-headless}/bin/${emulator} ${lib.concatStringsSep " " viceFlags}
-      echo timeout ${failAfter} ${testPkgs.vice-headless}/bin/${emulator} ${lib.concatStringsSep " " viceFlags}
+      if [[ $ == 124 || $ == 125 || $ == 126 || $ == 127 || $ == 137 ]]; then
+        echo "failAfter timeout time of $failAfter seconds has been exceeded. $name failed."
+        exit $
+      fi
       ${postCheckPhase}
       mkdir -p $out
       touch $out/passed

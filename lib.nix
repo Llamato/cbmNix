@@ -152,7 +152,7 @@ in
       inherit name src;
       buildPhase = ''
         runHook preBuild
-        find . -name "*.bas" -execdir sh -c '${pkgs.vice}/bin/petcat -w2 -o $1.prg -- $1' sh {} \;
+        find . -name "*.bas" -execdir sh -c '${pkgs.vice}/bin/petcat -w2 -o $1.bas.prg -- $1' sh {} \;
         runHook postBuild
       '';
       installPhase =

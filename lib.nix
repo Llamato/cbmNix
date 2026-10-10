@@ -187,45 +187,46 @@ in
     - debug (Bool): Should the output derivation include build and debugging artifacts?
   */
   buildBinaryPrgs =
-    {
-      name,
-      src,
-      loadAddress ? "800",
-      includedFiles ? [ "*" ],
-      removeFileExtension ? false,
-      debug ? false,
-      ...
-    }:
-    let
-      loadAddressHex = padFrontOfString 4 "0" (if builtins.isString loadAddress then loadAddress else decToHex loadAddress "");
-      includedEscapedFiles = map (includedFile: ''"${includedFile}"'') includedFiles;
-      findCommand = ''find . -type f -name ${lib.concatStringsSep " -o " includedEscapedFiles} -execdir sh -c 'echo "${loadAddressHex}" | xxd -r -p | cat - $1 > $(basename $1 ${lib.optionalString removeFileExtension "\"\${f%.*}\""}).prg' sh {} \;'';
-    in
-    pkgs.stdenv.mkDerivation {
-      inherit name src;
+  {
+    name,
+    src,
+    loadAddress ? "800",
+    includedFiles ? [ "*" ],
+    removeFileExtension ? false,
+    debug ? false,
+    ...
+  }:
+  let
+    loadAddressHex = padFrontOfString 4 "0" (
+      if builtins.isString loadAddress then loadAddress else decToHex loadAddress ""
+    );
 
-      nativeBuildInputs = with pkgs; [
-        xxd
-      ];
+    mkPrg = pkgs.writeShellScript "mk-prg" ''
+      outdir="$1"
+      in="$2"
+      out="$(basename "$in")"
+      ${lib.optionalString removeFileExtension "out=\"\${out%.*}\""}
+      echo "${loadAddressHex}" | ${pkgs.xxd}/bin/xxd -r -p | cat - "$in" > "$outdir/$out.prg"
+    '';
 
-      buildPhase = ''
-        runHook preBuild
-        ${findCommand}
-        runHook postBuild
-      '';
+    nameArgs = lib.concatMapStringsSep " -o " (f: "-name ${lib.escapeShellArg f}") includedFiles;
+  in
+  pkgs.stdenv.mkDerivation {
+    inherit name src;
 
-      installPhase =
-        if debug then
-          ''
-            mkdir -p $out
-            cp * $out
-          ''
-        else
-          ''
-            mkdir -p $out
-            cp *.prg $out
-          '';
-    };
+    buildPhase = ''
+      runHook preBuild
+      mkdir -p prgs
+      find . -type f -not -path './prgs/*' \( ${nameArgs} \) \
+        -exec ${mkPrg} "$PWD/prgs" {} \;
+      runHook postBuild
+    '';
+
+    installPhase = ''
+      mkdir -p $out
+      ${if debug then "cp -r . $out" else "cp prgs/*.prg $out"}
+    '';
+  };
 
   /**
     Build a PETSCII text file asset using petcats

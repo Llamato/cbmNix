@@ -9,9 +9,18 @@ let
     "prg"
     "seq"
   ];
-  removeExtension = filename: let matches = builtins.match "(.+)\\.[^.]+" filename; in if builtins.length matches == 0 then "" else builtins.head matches;
-  padFrontOfString = len: pad: str: if builtins.stringLength str >= len then str else padFrontOfString len pad (pad + str);
-  padBackOfString = len: pad: str: if builtins.stringLength str >= len then str else  padBackOfString len pad (str + pad);
+  removeExtension =
+    filename:
+    let
+      matches = builtins.match "(.+)\\.[^.]+" filename;
+    in
+    if builtins.length matches == 0 then "" else builtins.head matches;
+  padFrontOfString =
+    len: pad: str:
+    if builtins.stringLength str >= len then str else padFrontOfString len pad (pad + str);
+  padBackOfString =
+    len: pad: str:
+    if builtins.stringLength str >= len then str else padBackOfString len pad (str + pad);
   decToHex =
     dec: hex:
     if dec == 0 then
@@ -187,46 +196,46 @@ in
     - debug (Bool): Should the output derivation include build and debugging artifacts?
   */
   buildBinaryPrgs =
-  {
-    name,
-    src,
-    loadAddress ? "800",
-    includedFiles ? [ "*" ],
-    removeFileExtension ? false,
-    debug ? false,
-    ...
-  }:
-  let
-    loadAddressHex = padFrontOfString 4 "0" (
-      if builtins.isString loadAddress then loadAddress else decToHex loadAddress ""
-    );
+    {
+      name,
+      src,
+      loadAddress ? "800",
+      includedFiles ? [ "*" ],
+      removeFileExtension ? false,
+      debug ? false,
+      ...
+    }:
+    let
+      loadAddressHex = padFrontOfString 4 "0" (
+        if builtins.isString loadAddress then loadAddress else decToHex loadAddress ""
+      );
 
-    mkPrg = pkgs.writeShellScript "mk-prg" ''
-      outdir="$1"
-      in="$2"
-      out="$(basename "$in")"
-      ${lib.optionalString removeFileExtension "out=\"\${out%.*}\""}
-      echo "${loadAddressHex}" | ${pkgs.xxd}/bin/xxd -r -p | cat - "$in" > "$outdir/$out.prg"
-    '';
+      mkPrg = pkgs.writeShellScript "mk-prg" ''
+        outdir="$1"
+        in="$2"
+        out="$(basename "$in")"
+        ${lib.optionalString removeFileExtension "out=\"\${out%.*}\""}
+        echo "${loadAddressHex}" | ${pkgs.xxd}/bin/xxd -r -p | cat - "$in" > "$outdir/$out.prg"
+      '';
 
-    nameArgs = lib.concatMapStringsSep " -o " (f: "-name ${lib.escapeShellArg f}") includedFiles;
-  in
-  pkgs.stdenv.mkDerivation {
-    inherit name src;
+      nameArgs = lib.concatMapStringsSep " -o " (f: "-name ${lib.escapeShellArg f}") includedFiles;
+    in
+    pkgs.stdenv.mkDerivation {
+      inherit name src;
 
-    buildPhase = ''
-      runHook preBuild
-      mkdir -p prgs
-      find . -type f -not -path './prgs/*' \( ${nameArgs} \) \
-        -exec ${mkPrg} "$PWD/prgs" {} \;
-      runHook postBuild
-    '';
+      buildPhase = ''
+        runHook preBuild
+        mkdir -p prgs
+        find . -type f -not -path './prgs/*' \( ${nameArgs} \) \
+          -exec ${mkPrg} "$PWD/prgs" {} \;
+        runHook postBuild
+      '';
 
-    installPhase = ''
-      mkdir -p $out
-      ${if debug then "cp -r . $out" else "cp prgs/*.prg $out"}
-    '';
-  };
+      installPhase = ''
+        mkdir -p $out
+        ${if debug then "cp -r . $out" else "cp prgs/*.prg $out"}
+      '';
+    };
 
   /**
     Build a PETSCII text file asset using petcats
@@ -381,20 +390,20 @@ in
       failAfterSeconds ? 300,
       warp ? true,
       extraViceFlags ? [ ],
-      preCheckPhase ? '''',
-      postCheckPhase ? '''',
+      preCheckPhase ? "",
+      postCheckPhase ? "",
       ...
     }@args:
     let
       failAfter = toString failAfterSeconds;
       viceFlags = [
-        ''-initbreak ready''
-      ] 
-      ++ lib.optional (builtins.hasAttr "configFile" args) ''-config ${args.configFile}''
-      ++ lib.optional warp ''-warp''
+        "-initbreak ready"
+      ]
+      ++ lib.optional (builtins.hasAttr "configFile" args) "-config ${args.configFile}"
+      ++ lib.optional warp "-warp"
       ++ [
-        ''-moncommands ${monitorCommandsFile}''
-        ''-autostart ${fileUnderTest}''
+        "-moncommands ${monitorCommandsFile}"
+        "-autostart ${fileUnderTest}"
       ]
       ++ extraViceFlags;
     in

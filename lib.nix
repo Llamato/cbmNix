@@ -192,12 +192,13 @@ in
       src,
       loadAddress ? "800",
       includedFiles ? [ "*" ],
+      removeFileExtension ? false,
       debug ? false,
       ...
     }:
     let
       loadAddressHex = padFrontOfString 4 "0" (if builtins.isString loadAddress then loadAddress else decToHex loadAddress "");
-      findCommand = ''find . -name "${lib.concatStringsSep " -o " includedFiles}" -execdir sh -c 'echo "${loadAddressHex}" | xxd -r -p | cat - $1 > $1.prg' sh {} \;'';
+      findCommand = ''find . -type f -name "${lib.concatStringsSep " -o " includedFiles}" -execdir sh -c 'echo "${loadAddressHex}" | xxd -r -p | cat - $1 > $(basename $1 ${lib.optionalString removeFileExtension "\"\${f%.*}\""}).prg' sh {} \;'';
     in
     pkgs.stdenv.mkDerivation {
       inherit name src;

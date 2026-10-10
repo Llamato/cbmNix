@@ -9,7 +9,9 @@ let
     "prg"
     "seq"
   ];
-  removeExtension = filename: let matches = builtins.match "(.+)\\.[^.]+" filename; in if lib.length matches == 0 then "" else builtins.head matches;
+  removeExtension = filename: let matches = builtins.match "(.+)\\.[^.]+" filename; in if builtins.length matches == 0 then "" else builtins.head matches;
+  padFrontOfString = len: pad: str: if builtins.stringLength str >= len then str else padFrontOfString len pad (pad + str);
+  padBackOfString = len: pad: str: if builtins.stringLength str >= len then str else  padBackOfString len pad (str + pad);
   decToHex =
     dec: hex:
     if dec == 0 then
@@ -188,26 +190,25 @@ in
     {
       name,
       src,
-      includedFiles ? [ "*.prg" ],
+      loadAddress ? "800",
+      includedFiles ? [ "*" ],
       debug ? false,
       ...
-    }@args:
+    }:
     let
-      loadAddressHex =
-        if builtins.isString args.loadAddress then args.loadAddress else decToHex args.loadAddress;
+      loadAddressHex = padFrontOfString 4 "0" (if builtins.isString loadAddress then loadAddress else decToHex loadAddress "");
+      findCommand = ''find . -name "${lib.concatStringsSep " -o " includedFiles}" -execdir sh -c 'echo "${loadAddressHex}" | xxd -r -p | cat - $1 > $1.prg' sh {} \;'';
     in
     pkgs.stdenv.mkDerivation {
       inherit name src;
+
+      nativeBuildInputs = with pkgs; [
+        xxd
+      ];
+
       buildPhase = ''
         runHook preBuild
-        ${lib.optionalString (builtins.hasAttr "loadAddress" args) (
-          builtins.concatStringsSep "\n" (
-            map (
-              fileType:
-              ''find -name ${fileType} --execdir sh -c 'echo "${loadAddressHex}" | xxd -r -p | cat - $1 > $1' sh {}''
-            ) includedFiles
-          )
-        )}
+        ${findCommand}
         runHook postBuild
       '';
 
